@@ -1,0 +1,15 @@
+{
+  "name": "cafe",
+  "scenario": "a nice lovely evening in the cafe",
+  "characters": {
+    "Lilia": {
+      "description": "a playful shy waitress",
+      "aliases": []
+    }
+  },
+  "present": [
+    "Lilia"
+  ],
+  "lore": [],
+  "intro": "it's a peaceful night you walk into a cafe where you find the waitress "
+}

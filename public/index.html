@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MogranVN</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div id="app">
+
+  <section id="screen-select" class="screen">
+    <div class="select-toolbar">
+      <a href="/creator.html" class="icon-btn" aria-label="Open the World Creator">&#9998;</a>
+      <button id="btn-settings-outside" class="icon-btn" aria-label="Settings" type="button">&#9881;</button>
+    </div>
+    <div class="brand">
+      <h1>MogranVN</h1>
+      <p class="tagline">Choose a world to step into</p>
+    </div>
+    <div id="world-list" class="world-list"></div>
+  </section>
+
+  <section id="screen-story" class="screen hidden">
+    <header class="story-bar">
+      <button id="btn-back" class="icon-btn" aria-label="Back to worlds">&#8592;</button>
+      <h2 id="world-title"></h2>
+      <button id="btn-settings" class="icon-btn" aria-label="Settings">&#9881;</button>
+    </header>
+
+    <div class="stage">
+      <div class="portrait-frame">
+        <img id="portrait-img" src="" alt="" />
+        <div class="frame-corner tl"></div>
+        <div class="frame-corner tr"></div>
+        <div class="frame-corner bl"></div>
+        <div class="frame-corner br"></div>
+      </div>
+      <div id="nameplate" class="nameplate hidden"></div>
+    </div>
+
+    <div id="log" class="log"></div>
+
+    <form id="composer" class="composer">
+      <input id="input-message" type="text" placeholder="Write what you do or say..." autocomplete="off" />
+      <button id="btn-send" type="submit" class="send-btn" aria-label="Send">&#10148;</button>
+    </form>
+  </section>
+
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3>Settings</h3>
+      <label>Base URL
+        <input id="cfg-base-url" type="text" placeholder="http://localhost:11434/v1" />
+      </label>
+      <label>Model
+        <input id="cfg-model" type="text" list="model-options" placeholder="llama3.1" />
+        <datalist id="model-options"></datalist>
+      </label>
+      <label>Max reply length (tokens)
+        <input id="cfg-max-tokens" type="number" min="20" max="4000" step="10" placeholder="300" />
+      </label>
+      <label>Characters speaking per reply (1-5)
+        <input id="cfg-max-turns" type="number" min="1" max="5" step="1" />
+      </label>
+      <label>App port
+        <input id="cfg-port" type="number" min="1" max="65535" />
+      </label>
+
+      <p class="hint" style="margin-top:4px">Your character &mdash; lets the AI treat you as an actual person in the story instead of an anonymous "you".</p>
+      <label>Your name
+        <input id="cfg-user-name" type="text" placeholder="e.g. Kael" />
+      </label>
+      <label>Your description
+        <textarea id="cfg-user-desc" rows="2" placeholder="A transfer student, quiet but sharp-eyed."></textarea>
+      </label>
+      <label>Your avatar (shown to you only, not seen by the AI)
+        <input id="cfg-user-avatar" type="file" accept="image/*" />
+      </label>
+      <div id="cfg-avatar-preview" class="cover-preview"></div>
+
+      <p class="hint">Works with any OpenAI-compatible local server &mdash; Ollama, LM Studio, llama.cpp's server, koboldcpp, and similar all qualify. If the model list is empty, your LLM server may not support listing models &mdash; just type the name.</p>
+      <p id="cfg-status" class="status"></p>
+      <div class="modal-actions">
+        <button id="cfg-cancel" class="btn-secondary" type="button">Cancel</button>
+        <button id="cfg-save" class="btn-primary" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="/js/app.js"></script>
+
+
+</body>
+</html>

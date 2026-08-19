@@ -1,0 +1,986 @@
+/* =========================================================
+   
+   Visual redesign of the existing style.css.
+   Existing selectors are preserved so the current HTML/JS keeps working.
+   ========================================================= */
+
+:root {
+  --bg: #111111;
+  --panel: #171717;
+  --panel-2: #1f1f1f;
+  --panel-3: #252525;
+  --border: #2d2d2d;
+  --text: #f2f2f2;
+  --muted: #999999;
+  --muted-2: #707070;
+  --accent: #d7ff00;
+  --accent-dark: #a9c900;
+  --purple: #6366f1;
+  --danger: #e06b6b;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --serif: Georgia, "Times New Roman", serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--sans);
+  overflow: hidden;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+.screen {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.hidden {
+  display: none !important;
+}
+
+
+/* =========================================================
+   WORLD SELECT
+   ========================================================= */
+
+#screen-select {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 54px clamp(24px, 5vw, 72px) 48px;
+  background: var(--bg);
+  box-shadow: none;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.brand {
+  width: 100%;
+  max-width: 1180px;
+}
+
+.brand h1 {
+  font-family: var(--sans);
+  font-weight: 750;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.04em;
+  margin: 0 0 8px;
+  text-align: left;
+  color: var(--text);
+}
+
+.brand .tagline {
+  font-family: var(--sans);
+  color: var(--muted);
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  text-align: left;
+  margin: 0 0 34px;
+}
+
+.world-list {
+  width: 100%;
+  max-width: 1180px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+  gap: 18px;
+}
+
+.empty-state {
+  font-family: var(--sans);
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+  line-height: 1.6;
+}
+
+
+
+.world-card {
+  width: 70%;
+  min-height: 170px;
+  padding: 20px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  font-family: var(--sans);
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.world-card:hover,
+.world-card:focus-visible {
+  transform: translateY(-3px);
+  background: var(--panel-2);
+  border-color: #484848;
+  outline: none;
+}
+
+.world-card h3 {
+  margin: 0 0 9px;
+  color: var(--text);
+  font-size: 1.12rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.world-card p {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   STORY SCREEN
+   ========================================================= */
+
+.story-bar {
+  width: 100%;
+  max-width: none;
+  min-height: 64px;
+  margin: 0;
+  padding: 10px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  background: #151515;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.story-bar h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  font-family: var(--sans);
+  color: var(--text);
+  text-align: left;
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: #bcbcbc;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: 0.15s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  border-color: #505050;
+  background: var(--panel-2);
+}
+
+
+/* =========================================================
+   CHARACTER / IMAGE STAGE
+   ========================================================= */
+
+.stage {
+  flex-shrink: 0;
+  width: min(75 px, calc(100% - 10px));
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 220px 0 10px;
+}
+
+/*
+  The reference UI uses a large horizontal artwork area rather
+  than a tiny circular avatar. The image remains the same <img>.
+*/
+.portrait-frame {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  height: min(34vw, 300px);
+  min-height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.portrait-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.frame-corner {
+  display: none;
+}
+
+.nameplate {
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 0 0 5px;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+
+/* =========================================================
+   SCENE ILLUSTRATIONS (per-turn art in the log)
+   Distinct from the fixed portrait above the log: this image
+   swaps every turn to match the current emotion, and each one
+   is left behind as the story's illustrated history. Sits above
+   its turn's text within the same .assistant-block.
+   ========================================================= */
+
+.assistant-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.scene-slot:empty {
+  display: none;
+}
+
+.scene-illustration {
+  position: relative;
+  width: 65%;
+  height: min(30vw, 20px);
+  min-height: 560px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  animation: turn-in 0.25s ease;
+}
+
+.scene-illustration img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.scene-illustration-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  pointer-events: none;
+}
+
+.scene-illustration-label {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-illustration {
+    animation: none;
+  }
+}
+
+
+/* =========================================================
+   STORY LOG
+   ========================================================= */
+
+.log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 24px 30px;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  background: var(--bg);
+  scrollbar-width: thin;
+  scrollbar-color: #3b3b3b transparent;
+}
+
+.log::-webkit-scrollbar {
+  width: 8px;
+}
+
+.log::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.log::-webkit-scrollbar-thumb {
+  background: #383838;
+  border-radius: 8px;
+}
+
+.log::-webkit-scrollbar-thumb:hover {
+  background: #505050;
+}
+
+.turn {
+  margin-bottom: 22px;
+  line-height: 1.68;
+  font-size: 1.03rem;
+  color: #c8c8c8;
+  animation: turn-in 0.25s ease;
+}
+
+@keyframes turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn {
+    animation: none;
+  }
+
+  .portrait-frame img {
+    transition: none;
+  }
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.3;
+  animation: typing-pulse 1.2s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-pulse {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.turn .turn-speaker {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.turn.narrator .turn-speaker {
+  color: #a8a8a8;
+}
+
+.turn.narrator .turn-text {
+  font-style: normal;
+  color: #8f8f8f;
+}
+
+.turn.user {
+  text-align: right;
+}
+
+.turn.user .turn-text {
+  display: inline-block;
+  background: #202020;
+  border: 1px solid #303030;
+  border-left: 1px solid #303030;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: var(--sans);
+  font-size: 0.92rem;
+  color: var(--text);
+  max-width: min(80%, 720px);
+  text-align: left;
+}
+
+.turn.error .turn-text {
+  color: var(--danger);
+  font-family: var(--sans);
+  font-size: 0.86rem;
+}
+
+
+/* =========================================================
+   COMPOSER
+   ========================================================= */
+
+.composer {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  padding: 12px 18px 18px;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  background: var(--bg);
+  border-top: none;
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+}
+
+.composer::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+  background: #202020;
+  border: 1px solid #303030;
+  border-radius: 14px;
+  padding: 14px 17px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.92rem;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    opacity 0.2s ease;
+}
+
+.composer input:hover {
+  border-color: #414141;
+}
+
+.composer input:focus {
+  border-color: #555555;
+  background: #232323;
+}
+
+.composer input::placeholder {
+  color: #858585;
+}
+
+.composer.sending input {
+  opacity: 0.55;
+}
+
+.send-btn {
+  background: var(--text);
+  border: none;
+  color: #111;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.send-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.send-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+
+/* =========================================================
+   SETTINGS MODAL
+   ========================================================= */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.modal-card {
+  background: #1b1b1b;
+  border: 1px solid #363636;
+  border-radius: 14px;
+  padding: 26px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  
+  /* --- NEW PROPERTIES TO ADD --- */
+  max-height: 90vh; /* Limits the height to 90% of the viewport */
+  overflow-y: auto; /* Adds the vertical slider/scrollbar */
+  scrollbar-width: thin; /* Firefox scrollbar styling */
+  scrollbar-color: #3b3b3b transparent; 
+}
+
+/* Custom scrollbar for the settings modal (Chrome, Safari, Edge) */
+.modal-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-card::-webkit-scrollbar-thumb {
+  background: #383838;
+  border-radius: 8px;
+}
+
+.modal-card::-webkit-scrollbar-thumb:hover {
+  background: #505050;
+}
+
+.modal-card h3 {
+  margin: 0 0 20px;
+  font-family: var(--sans);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.modal-card label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: #a5a5a5;
+  margin-bottom: 14px;
+}
+
+.modal-card input,
+.modal-card textarea {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  background: #111;
+  border: 1px solid #303030;
+  border-radius: 9px;
+  padding: 11px 12px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.modal-card textarea { font-family: var(--sans); }
+
+.cover-preview img {
+  max-width: 160px;
+  display: block;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  margin: 8px 0 4px;
+}
+
+.modal-card input:focus,
+.modal-card textarea:focus {
+  border-color: #555;
+}
+
+.modal-card .hint {
+  font-family: var(--sans);
+  font-size: 0.74rem;
+  color: #858585;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.status {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--accent);
+  min-height: 14px;
+  margin: 0 0 14px;
+}
+
+
+/* =========================================================
+   
+   These are harmless if the current HTML doesn't use them.
+   If the sidebar markup already exists, these rules will make
+   it visually match the reference without JS changes.
+   ========================================================= */
+
+.sidebar,
+.side-nav,
+.app-sidebar,
+#sidebar {
+  background: #151515;
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.sidebar a,
+.side-nav a,
+.app-sidebar a,
+#sidebar a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.sidebar a:hover,
+.side-nav a:hover,
+.app-sidebar a:hover,
+#sidebar a:hover {
+  color: var(--text);
+}
+
+.sidebar .active,
+.side-nav .active,
+.app-sidebar .active,
+#sidebar .active {
+  background: #232323;
+  color: var(--text);
+  border-radius: 8px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .stage {
+    width: calc(100% - 32px);
+  }
+
+  .portrait-frame {
+    height: min(38vw, 260px);
+  }
+
+  .log {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .composer {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .composer::before {
+    left: 14px;
+    right: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    overflow: hidden;
+  }
+
+  #screen-select {
+    padding: 34px 16px 28px;
+  }
+
+  .world-list {
+    grid-template-columns: 1fr;
+  }
+
+  .story-bar {
+    min-height: 58px;
+    padding: 9px 14px;
+  }
+
+  .stage {
+    width: calc(100% - 24px);
+    padding-top: 12px;
+  }
+
+  .portrait-frame {
+    min-height: 150px;
+    height: 45vw;
+    border-radius: 9px;
+  }
+
+  .scene-illustration {
+    min-height: 150px;
+    height: 45vw;
+    border-radius: 12px;
+  }
+
+  .log {
+    padding: 6px 14px 24px;
+  }
+
+  .turn {
+    font-size: 0.98rem;
+  }
+
+  .turn.user .turn-text {
+    max-width: 90%;
+  }
+
+  .composer {
+    padding: 9px 10px 12px;
+    gap: 8px;
+  }
+
+  .composer::before {
+    left: 10px;
+    right: 10px;
+  }
+
+  .composer input {
+    padding: 12px 14px;
+    border-radius: 13px;
+  }
+
+  .send-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+  }
+}
+
+
+/* =========================================================
+   STORY PAGE SCROLL FIX
+   The previous layout made .log the only scroll container.
+   Because .stage sits outside .log, it could never scroll away.
+   Now the whole story screen scrolls while the top bar and
+   composer stay pinned.
+   ========================================================= */
+
+#screen-story,
+.screen.story-screen {
+  height: 100vh;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: #3b3b3b transparent;
+}
+
+#screen-story::-webkit-scrollbar,
+.screen.story-screen::-webkit-scrollbar {
+  width: 8px;
+}
+
+#screen-story::-webkit-scrollbar-track,
+.screen.story-screen::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#screen-story::-webkit-scrollbar-thumb,
+.screen.story-screen::-webkit-scrollbar-thumb {
+  background: #383838;
+  border-radius: 8px;
+}
+
+#screen-story::-webkit-scrollbar-thumb:hover,
+.screen.story-screen::-webkit-scrollbar-thumb:hover {
+  background: #505050;
+}
+
+/* Keep the title bar visible while the artwork/story scrolls underneath it. */
+#screen-story .story-bar,
+.screen.story-screen .story-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* IMPORTANT:
+   .log must NOT be its own scroll area anymore.
+   Otherwise the stage and log would remain separate.
+*/
+#screen-story {
+    height: 100vh;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header stays at the top */
+#screen-story > .story-bar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    flex-shrink: 0;
+}
+
+/* Image is now part of the page scroll */
+#screen-story > .stage {
+    flex-shrink: 0;
+}
+
+/* IMPORTANT: log is no longer its own scroll container */
+#screen-story > #log {
+    flex: none;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+}
+
+/* Message box stays at bottom */
+#screen-story > #composer {
+    position: sticky;
+    bottom: 0;
+    z-index: 25;
+    flex-shrink: 0;
+    background: var(--bg);
+}
+
+/* The stage is now part of the same document flow as the story. */
+#screen-story .stage,
+.screen.story-screen .stage {
+  flex-shrink: 0;
+}
+
+/* Keep the composer at the bottom of the viewport while scrolling. */
+#screen-story .composer,
+.screen.story-screen .composer {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+
+/* On small screens the same rule applies. */
+@media (max-width: 600px) {
+  #screen-story,
+  .screen.story-screen {
+    overflow-y: auto;
+  }
+
+  #screen-story .log,
+  .screen.story-screen .log {
+    overflow: visible;
+    height: auto;
+  }
+}
+.world-card { position: relative; /* add this to the existing rule */ }
+
+.world-card.has-cover {
+  background-size: cover;
+  background-position: center;
+  min-height: 140px;
+  display: flex;
+  align-items: flex-end;
+}
+.world-card.has-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: linear-gradient(to top, rgba(20,19,28,0.92), rgba(20,19,28,0.35) 60%, rgba(20,19,28,0.05));
+}
+.world-card.has-cover h3,
+.world-card.has-cover p {
+  position: relative;
+  z-index: 1;
+}
+.select-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px 0;
+}

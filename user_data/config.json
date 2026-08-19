@@ -1,0 +1,9 @@
+{
+  "llmBaseUrl": "http://localhost:5001",
+  "llmModel": "koboldcpp/gemma-4-12B-it-Q4_K_M",
+  "llmMaxTokens": null,
+  "maxTurnsPerReply": 3,
+  "userName": "Borai",
+  "userDescription": "",
+  "port": 11434
+}

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MogranVN &mdash; Creator</title>
+<link rel="stylesheet" href="/css/style.css" />
+<link rel="stylesheet" href="/css/creator.css" />
+</head>
+<body>
+<div id="creator-app">
+  <header class="creator-bar">
+    <a href="/index.html" class="icon-btn" aria-label="Back to worlds">&#8592;</a>
+    <h2>Creator</h2>
+    <span style="width:36px"></span>
+  </header>
+
+  <div class="creator-layout">
+    <aside class="creator-sidebar">
+      <h3>Worlds</h3>
+      <div id="world-picker-list"></div>
+      <button id="btn-new-world" class="btn-primary" type="button" style="margin-top:14px;width:100%">+ New world</button>
+    </aside>
+
+    <main class="creator-main">
+      <div id="new-world-form" class="creator-panel hidden">
+        <h3>Create a new world</h3>
+        <label>Name
+          <input id="nw-name" type="text" placeholder="write the world name" />
+        </label>
+        <label>Scenario
+          <textarea id="nw-scenario" rows="3" placeholder="One or two sentences setting the scene."></textarea>
+        </label>
+        <button id="nw-create" class="btn-primary" type="button">Create</button>
+        <p id="nw-error" class="status"></p>
+      </div>
+
+      <p id="empty-hint" class="empty-state">Pick a world on the left, or create a new one.</p>
+
+      <div id="world-editor" class="hidden">
+        <section class="creator-panel">
+          <h3>World details</h3>
+          <label>Name
+            <input id="w-name" type="text" />
+          </label>
+          <label>Scenario
+            <textarea id="w-scenario" rows="3"></textarea>
+          </label>
+          <label>Opening message (shown at the start of a new session &mdash; both you and the AI see it as having already happened)
+            <textarea id="w-intro" rows="4" placeholder="Plain text, or use [Name|emotion] tags for a specific character to open the scene."></textarea>
+          </label>
+          <button id="w-save" class="btn-primary" type="button">Save</button>
+          <p id="w-status" class="status"></p>
+
+          <label style="margin-top:14px">Cover photo (shown on the world-select screen)
+            <input id="w-cover-file" type="file" accept="image/*" />
+          </label>
+          <div id="w-cover-preview" class="cover-preview"></div>
+        </section>
+
+        <section class="creator-panel">
+          <h3>Characters</h3>
+          <div id="character-list"></div>
+
+          <details class="add-form">
+            <summary>+ Add character</summary>
+            <label>Name
+              <input id="c-name" type="text" />
+            </label>
+            <label>Description
+              <textarea id="c-desc" rows="2"></textarea>
+            </label>
+            <label>Aliases (comma separated &mdash; other names the story might call them)
+              <input id="c-aliases" type="text" placeholder="e.g. Voss, the Headmaster" />
+            </label>
+            <label class="checkbox-label"><input id="c-present" type="checkbox" /> Present by default (speaking cast, not background)</label>
+            <button id="c-add" class="btn-primary" type="button">Add character</button>
+            <p id="c-error" class="status"></p>
+          </details>
+        </section>
+
+        <section class="creator-panel">
+          <h3>Lore</h3>
+          <div id="lore-list"></div>
+
+          <details class="add-form">
+            <summary>+ Add lore entry</summary>
+            <label>Title
+              <input id="l-title" type="text" />
+            </label>
+            <label>Keys (comma separated &mdash; words that bring this into a scene)
+              <input id="l-keys" type="text" placeholder="e.g. northern wing, the archives" />
+            </label>
+            <label>Content
+              <textarea id="l-content" rows="3"></textarea>
+            </label>
+            <label class="checkbox-label"><input id="l-always" type="checkbox" /> Always include (keep these few and short)</label>
+            <button id="l-add" class="btn-primary" type="button">Add lore entry</button>
+            <p id="l-error" class="status"></p>
+          </details>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="/js/creator.js"></script>
+</body>
+</html>
