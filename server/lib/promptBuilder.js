@@ -27,6 +27,7 @@ function buildSystemPrompt(world, presentNames, maxTurns, persona) {
     world.scenario ? `Scenario: ${world.scenario}` : '',
     personaLine,
     `Characters currently present in the scene:\n${roster || '- (none defined yet)'}`,
+    world.styleNotes && world.styleNotes.trim() ? `Writing style notes: ${world.styleNotes.trim()}` : '',
     'Rules for every reply:',
     turnRule,
     '2. Each tag must be in the exact form [Name|emotion], using only a name and emotion from the roster above, or [Narrator|neutral] for pure scene description.',

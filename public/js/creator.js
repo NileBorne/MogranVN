@@ -13,6 +13,7 @@
   const wName = document.getElementById('w-name');
   const wScenario = document.getElementById('w-scenario');
   const wIntro = document.getElementById('w-intro');
+  const wStyleNotes = document.getElementById('w-style-notes');
   const wSave = document.getElementById('w-save');
   const wStatus = document.getElementById('w-status');
   const wCoverFile = document.getElementById('w-cover-file');
@@ -125,6 +126,7 @@ if (tokensSlider && tokensVal) {
     wName.value = currentWorldData.name;
     wScenario.value = currentWorldData.scenario || '';
     wIntro.value = currentWorldData.intro || '';
+    wStyleNotes.value = currentWorldData.styleNotes || '';
     wStatus.textContent = '';
 
     renderCoverPreview();
@@ -167,7 +169,7 @@ if (tokensSlider && tokensVal) {
     const res = await fetch(`/api/creator/worlds/${encodeURIComponent(currentWorldName)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: wName.value.trim(), scenario: wScenario.value.trim(), intro: wIntro.value })
+      body: JSON.stringify({ name: wName.value.trim(), scenario: wScenario.value.trim(), intro: wIntro.value, styleNotes: wStyleNotes.value })
     });
     const data = await res.json();
     if (!res.ok) { wStatus.textContent = data.error || 'Could not save.'; return; }
@@ -236,6 +238,43 @@ if (tokensSlider && tokensVal) {
       const desc = document.createElement('p');
       desc.className = 'character-desc';
       desc.textContent = char.description || '(no description)';
+
+      const editDetails = document.createElement('details');
+      editDetails.className = 'add-form';
+
+      const editSummary = document.createElement('summary');
+      editSummary.textContent = 'Edit character';
+      editDetails.appendChild(editSummary);
+
+      const editDescLabel = document.createElement('label');
+      editDescLabel.textContent = 'Description';
+      const editDescInput = document.createElement('textarea');
+      editDescInput.rows = 2;
+      editDescInput.value = char.description || '';
+      editDescLabel.appendChild(editDescInput);
+
+      const editAliasesLabel = document.createElement('label');
+      editAliasesLabel.textContent = 'Aliases (comma separated)';
+      const editAliasesInput = document.createElement('input');
+      editAliasesInput.type = 'text';
+      editAliasesInput.value = (char.aliases || []).join(', ');
+      editAliasesLabel.appendChild(editAliasesInput);
+
+      const editStatus = document.createElement('p');
+      editStatus.className = 'status';
+
+      const editSaveBtn = document.createElement('button');
+      editSaveBtn.type = 'button';
+      editSaveBtn.className = 'btn-primary';
+      editSaveBtn.textContent = 'Save changes';
+      editSaveBtn.addEventListener('click', () =>
+        saveCharacterEdit(name, editDescInput, editAliasesInput, editStatus)
+      );
+
+      editDetails.appendChild(editDescLabel);
+      editDetails.appendChild(editAliasesLabel);
+      editDetails.appendChild(editSaveBtn);
+      editDetails.appendChild(editStatus);
 
       // The reference portrait is a fixed image shown in the top frame
       // whenever this character is speaking — separate from the emotion set
@@ -335,12 +374,27 @@ if (tokensSlider && tokensVal) {
 
       card.appendChild(head);
       card.appendChild(desc);
+      card.appendChild(editDetails);
       card.appendChild(portraitSection);
       card.appendChild(emotionLabel);
       card.appendChild(thumbs);
       card.appendChild(uploadRow);
       characterList.appendChild(card);
     }
+  }
+
+  async function saveCharacterEdit(name, descInput, aliasesInput, statusEl) {
+    statusEl.textContent = '';
+    const aliases = aliasesInput.value.split(',').map((s) => s.trim()).filter(Boolean);
+
+    const res = await fetch(`/api/creator/worlds/${encodeURIComponent(currentWorldName)}/characters/${encodeURIComponent(name)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: descInput.value.trim(), aliases })
+    });
+    const data = await res.json();
+    if (!res.ok) { statusEl.textContent = data.error || 'Could not save.'; return; }
+    await refreshCurrentWorld();
   }
 
   async function toggleCharacterPresent(name, present) {

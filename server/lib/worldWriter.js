@@ -34,12 +34,13 @@ function createWorld(name, scenario) {
   return manifest;
 }
 
-function updateWorldMeta(worldName, { name, scenario, intro, present } = {}) {
+function updateWorldMeta(worldName, { name, scenario, intro, styleNotes, present } = {}) {
   const manifest = readManifest(worldName);
   if (!manifest) throw new Error('World not found');
   if (name !== undefined && name.trim()) manifest.name = name.trim();
   if (scenario !== undefined) manifest.scenario = scenario;
   if (intro !== undefined) manifest.intro = intro;
+  if (styleNotes !== undefined) manifest.styleNotes = styleNotes;
   if (present !== undefined) manifest.present = present;
   writeManifest(worldName, manifest);
   return manifest;

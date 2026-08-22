@@ -105,6 +105,7 @@ function loadWorld(worldName) {
     present: (manifest.present || Object.keys(characters)).filter((n) => characters[n]),
     lore: manifest.lore || [],
     intro: manifest.intro || '',
+    styleNotes: manifest.styleNotes || '',
     characters
   };
 }

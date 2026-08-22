@@ -128,7 +128,7 @@ button {
 
 .world-card {
   width: 70%;
-  min-height: 170px;
+  min-height: 320px;
   padding: 20px;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -228,26 +228,24 @@ button {
    CHARACTER / IMAGE STAGE
    ========================================================= */
 
+
+/* Fixes the main character stage above the chat */
+/* Fixes the main character stage above the chat */
 .stage {
   flex-shrink: 0;
-  width: min(75 px, calc(100% - 10px));
+  width: min(750px, calc(100% - 10px));
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 220px 0 10px;
+  padding: 30px 0 10px; /* Removes the old massive top padding */
 }
 
-/*
-  The reference UI uses a large horizontal artwork area rather
-  than a tiny circular avatar. The image remains the same <img>.
-*/
 .portrait-frame {
   position: relative;
   width: 100%;
   max-width: 960px;
-  height: min(34vw, 300px);
-  min-height: 80px;
+  height: auto; /* Shrink-wraps to the image */
   border-radius: 10px;
   overflow: hidden;
   background: var(--panel);
@@ -256,12 +254,14 @@ button {
 
 .portrait-frame img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-height: 350px; /* Keeps extremely tall images from taking over the screen */
+  object-fit: contain; /* Prevents cropping */
   display: block;
   opacity: 1;
   transition: opacity 0.3s ease;
 }
+
 
 .frame-corner {
   display: none;
@@ -298,11 +298,12 @@ button {
   display: none;
 }
 
+/* Fixes the per-turn images in the chat log */
 .scene-illustration {
   position: relative;
-  width: 65%;
-  height: min(30vw, 20px);
-  min-height: 560px;
+  width: 100%;
+  max-width: 500px;
+  height: auto; /* Shrink-wraps to the image */
   margin-bottom: 14px;
   border-radius: 14px;
   overflow: hidden;
@@ -313,8 +314,7 @@ button {
 
 .scene-illustration img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
 }
 
@@ -345,6 +345,107 @@ button {
   }
 }
 
+/* 1. The Container (Keeps the buttons grouped together) */
+.regenerate-row,
+.message-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  position: relative; /* This is crucial so the dropdown menu positions correctly */
+}
+
+/* 2. The Circular Icon Buttons (Matches the Regen and 3-dots in your image) */
+.msg-icon-btn,
+#btn-regenerate { 
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid #333; 
+  color: #c8c8c8;
+  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.msg-icon-btn:hover,
+#btn-regenerate:hover {
+  background: #2a2a2a;
+  color: #ffffff;
+  border-color: #555555;
+}
+
+/* 3. The Dropdown Box (The floating dark box from the screenshot) */
+.msg-dropdown {
+  position: absolute;
+  bottom: 100%; /* Makes it float directly above the button */
+  left: 48px; /* Shifts it slightly next to the circular buttons */
+  margin-bottom: 8px;
+  background: #252525; 
+  border: 1px solid #363636;
+  border-radius: 12px;
+  padding: 6px 0;
+  min-width: 130px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+
+/* 4. The Dropdown Items (The Edit / Delete text inside the box) */
+.msg-dropdown-item {
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  color: #f2f2f2;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.msg-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Make the inline edit textarea taller and more spacious */
+.message-editor-textarea {
+  width: 200%;
+  min-height: 140px; /* Bigger editing space */
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  font-family: var(--sans);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  resize: vertical;
+  outline: none;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  transition: border-color 0.15s ease;
+}
+
+.message-editor-textarea:focus {
+  border-color: #555555;
+}
+
+/* Matching the smooth contours for cards and panels */
+.world-card,
+.modal-card,
+.portrait-frame,
+.scene-illustration {
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
 
 /* =========================================================
    STORY LOG
@@ -614,7 +715,6 @@ button {
   scrollbar-color: #3b3b3b transparent; 
 }
 
-/* Custom scrollbar for the settings modal (Chrome, Safari, Edge) */
 .modal-card::-webkit-scrollbar {
   width: 8px;
 }
@@ -697,12 +797,6 @@ button {
 }
 
 
-/* =========================================================
-   
-   These are harmless if the current HTML doesn't use them.
-   If the sidebar markup already exists, these rules will make
-   it visually match the reference without JS changes.
-   ========================================================= */
 
 .sidebar,
 .side-nav,
@@ -837,13 +931,7 @@ button {
 }
 
 
-/* =========================================================
-   STORY PAGE SCROLL FIX
-   The previous layout made .log the only scroll container.
-   Because .stage sits outside .log, it could never scroll away.
-   Now the whole story screen scrolls while the top bar and
-   composer stay pinned.
-   ========================================================= */
+
 
 #screen-story,
 .screen.story-screen {
@@ -907,12 +995,12 @@ button {
     flex-shrink: 0;
 }
 
-/* Image is now part of the page scroll */
+
 #screen-story > .stage {
     flex-shrink: 0;
 }
 
-/* IMPORTANT: log is no longer its own scroll container */
+
 #screen-story > #log {
     flex: none;
     min-height: 0;
@@ -957,7 +1045,7 @@ button {
     height: auto;
   }
 }
-.world-card { position: relative; /* add this to the existing rule */ }
+.world-card { position: relative;}
 
 .world-card.has-cover {
   background-size: cover;
@@ -983,4 +1071,111 @@ button {
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 18px 0;
+}
+
+/* ---------------------------------------------------------
+   MESSAGE ACTIONS (3-Dots, Regen, and Dropdown)
+   --------------------------------------------------------- */
+.message-actions-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  position: relative;
+}
+
+.msg-icon-btn,
+#btn-regenerate {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #1f1f1f;
+  border: 1px solid #333333;
+  color: #c8c8c8;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.msg-icon-btn:hover,
+#btn-regenerate:hover {
+  background: #2a2a2a;
+  color: #ffffff;
+  border-color: #555555;
+}
+
+.msg-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  background: #252525;
+  border: 1px solid #383838;
+  border-radius: 14px;
+  padding: 6px;
+  min-width: 140px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 100;
+}
+
+.msg-dropdown-item {
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  color: #f2f2f2;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.msg-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------------------------------------------------------
+   BIG INLINE EDIT BUBBLE
+   --------------------------------------------------------- */
+.inline-edit-container {
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inline-edit-textarea {
+  width: 100%;
+  min-height: 180px; /* Much bigger starting height */
+  background: #1a1a1a;
+  color: #f2f2f2;
+  border: 1px solid #383838;
+  border-radius: 12px;
+  padding: 14px;
+  font-family: var(--sans);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  resize: vertical; /* Lets you drag it taller if you want */
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.inline-edit-textarea:focus {
+  border-color: #666666;
+}
+
+.inline-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }

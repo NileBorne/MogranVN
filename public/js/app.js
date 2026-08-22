@@ -12,6 +12,9 @@
   const btnBack = document.getElementById('btn-back');
   const btnSettings = document.getElementById('btn-settings');
   const btnSettingsOutside = document.getElementById('btn-settings-outside');
+  const btnNewSession = document.getElementById('btn-new-session');
+  const regenerateRow = document.getElementById('regenerate-row');
+  const btnRegenerate = document.getElementById('btn-regenerate');
   const settingsModal = document.getElementById('settings-modal');
   const cfgBaseUrl = document.getElementById('cfg-base-url');
   const cfgModel = document.getElementById('cfg-model');
@@ -20,7 +23,8 @@
   const cfgUserName = document.getElementById('cfg-user-name');
   const cfgUserDesc = document.getElementById('cfg-user-desc');
   const cfgUserAvatar = document.getElementById('cfg-user-avatar');
-  const cfgAvatarPreview = document.getElementById('cfg-avatar-preview');  const cfgPort = document.getElementById('cfg-port');
+  const cfgAvatarPreview = document.getElementById('cfg-avatar-preview');
+  const cfgPort = document.getElementById('cfg-port');
   const cfgStatus = document.getElementById('cfg-status');
   const modelOptions = document.getElementById('model-options');
   const cfgCancel = document.getElementById('cfg-cancel');
@@ -32,7 +36,7 @@
   let sending = false;
   let currentSceneImage = null;
   let currentPortraitSpeaker = null;
-
+  let currentTurns = []; // mirrors the server's session.turns, used for edit prefill + regenerate
 
   init();
 
@@ -41,6 +45,8 @@
     btnBack.addEventListener('click', backToSelect);
     btnSettings.addEventListener('click', openSettings);
     if (btnSettingsOutside) btnSettingsOutside.addEventListener('click', openSettings);
+    if (btnNewSession) btnNewSession.addEventListener('click', startNewSession);
+    if (btnRegenerate) btnRegenerate.addEventListener('click', regenerateLastReply);
     cfgCancel.addEventListener('click', closeSettings);
     cfgSave.addEventListener('click', saveSettings);
     cfgUserAvatar.addEventListener('change', uploadUserAvatar);
@@ -62,13 +68,17 @@
       const card = document.createElement('button');
       card.className = 'world-card';
       card.type = 'button';
+
       if (world.coverImage) {
         card.classList.add('has-cover');
         card.style.backgroundImage = `url(${world.coverImage})`;
+        card.setAttribute('aria-label', world.name);
+      } else {
+        card.innerHTML = '<h3></h3><p></p>';
+        card.querySelector('h3').textContent = world.name;
+        card.querySelector('p').textContent = world.scenario || 'Tap to step inside.';
       }
-      card.innerHTML = '<h3></h3><p></p>';
-      card.querySelector('h3').textContent = world.name;
-      card.querySelector('p').textContent = world.scenario || 'Tap to step inside.';
+
       card.addEventListener('click', () => enterWorld(world.name));
       worldList.appendChild(card);
     }
@@ -84,14 +94,8 @@
     worldTitle.textContent = currentWorldData.name;
     screenSelect.classList.add('hidden');
     screenStory.classList.remove('hidden');
-    log.innerHTML = '';
-    currentSceneImage = null;
-    currentPortraitSpeaker = null;
-    portraitImg.removeAttribute('src');
-    portraitImg.style.opacity = '0';
-    nameplate.classList.add('hidden');
 
-    await restoreHistory();
+    await reloadLog();
     inputMessage.focus();
   }
 
@@ -101,6 +105,7 @@
     currentWorldName = null;
     currentWorldData = null;
     currentSessionId = null;
+    currentTurns = [];
   }
 
   function getOrCreateSessionId(worldName) {
@@ -113,22 +118,61 @@
     return id;
   }
 
-  async function restoreHistory() {
-    const res = await fetch(
-      `/api/worlds/${encodeURIComponent(currentWorldName)}/sessions/${encodeURIComponent(currentSessionId)}`
-    );
-    if (!res.ok) return;
-    const data = await res.json();
+  async function startNewSession() {
+    if (!confirm('Start a new session? Your current conversation is kept on disk but won\u2019t show here anymore.')) return;
+    const key = `inkbound:session:${currentWorldName}`;
+    const newId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    localStorage.setItem(key, newId);
+    currentSessionId = newId;
+    await reloadLog();
+  }
 
-    for (const turn of data.turns || []) {
+  // The single source of truth for what's on screen: always re-fetches the
+  // session and re-renders every turn from scratch. Used on entry and after
+  // every mutation (send, regenerate, edit, delete) instead of trying to
+  // patch the DOM incrementally — that would need perfectly-tracked indices
+  // across every one of those operations, and getting that wrong silently
+  // is worse than a harmless extra fetch on a local server.
+  async function reloadLog() {
+    try {
+      const res = await fetch(
+        `/api/worlds/${encodeURIComponent(currentWorldName)}/sessions/${encodeURIComponent(currentSessionId)}`
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      renderFullLog(data.turns || []);
+    } catch {
+      // network hiccup — leave whatever's currently on screen as-is
+    }
+  }
+
+  function renderFullLog(turns) {
+    currentTurns = turns;
+    log.innerHTML = '';
+    currentSceneImage = null;
+    currentPortraitSpeaker = null;
+    portraitImg.removeAttribute('src');
+    portraitImg.style.opacity = '0';
+    nameplate.classList.add('hidden');
+
+    turns.forEach((turn, index) => {
       if (turn.role === 'user') {
-        appendUserTurn(turn.text);
+        appendUserTurn(turn.text, index);
       } else {
-        const turnDiv = appendAssistantTurn(turn.speaker, turn.text);
+        const turnDiv = appendAssistantTurn(turn.speaker, turn.text, index);
         setStage(turn.speaker, turn.emotion, turnDiv.sceneSlot);
       }
-    }
+    });
+
+    updateRegenerateVisibility();
     screenStory.scrollTop = screenStory.scrollHeight;
+  }
+
+  function updateRegenerateVisibility() {
+    if (!regenerateRow) return;
+    const last = currentTurns[currentTurns.length - 1];
+    const canRegenerate = last && last.role === 'assistant' && !sending;
+    regenerateRow.classList.toggle('hidden', !canRegenerate);
   }
 
   function setStage(speaker, emotion, slot) {
@@ -170,8 +214,6 @@
   function updateSceneArt(speaker, emotion, slot) {
     const image = sceneImageUrlFor(speaker, emotion);
 
-    // Only create a new illustration when the actual image changes, so the
-    // log doesn't fill up with duplicate frames turn after turn.
     if (image && image !== currentSceneImage) {
       createSceneIllustration(image, speaker, emotion, slot);
       currentSceneImage = image;
@@ -204,14 +246,9 @@
       scene.appendChild(label);
     }
 
-    // Fall back to the end of the log if no slot was supplied.
     (slot || log).appendChild(scene);
   }
 
-  // Fixed per-character reference image for the top portrait frame. Uses a
-  // dedicated `portraitFile` on the character if the world data provides one;
-  // otherwise falls back to their neutral emotion art so this works with no
-  // world-data changes at all.
   function portraitUrlFor(speaker) {
     const char = currentWorldData && currentWorldData.characters && currentWorldData.characters[speaker];
     if (!char) return null;
@@ -220,7 +257,6 @@
     return `/media/${encodeURIComponent(currentWorldName)}/characters/${encodeURIComponent(speaker)}/${encodeURIComponent(file)}`;
   }
 
-  // Emotion-matched art for the scene illustrations that accumulate in the log.
   function sceneImageUrlFor(speaker, emotion) {
     const char = currentWorldData && currentWorldData.characters && currentWorldData.characters[speaker];
     if (!char) return null;
@@ -229,18 +265,22 @@
     return `/media/${encodeURIComponent(currentWorldName)}/characters/${encodeURIComponent(speaker)}/${encodeURIComponent(file)}`;
   }
 
-  function appendUserTurn(text) {
+  // index is optional — omitted while a reply is still streaming in (nothing
+  // to edit/delete yet), present once rendered from a known session.turns
+  // position (via reloadLog), which is when the action buttons appear.
+  function appendUserTurn(text, index) {
     const div = document.createElement('div');
     div.className = 'turn user';
     const span = document.createElement('span');
     span.className = 'turn-text';
     span.textContent = text;
     div.appendChild(span);
+    addTurnActions(div, index);
     log.appendChild(div);
     return div;
   }
 
-  function appendAssistantTurn(speaker, initialText) {
+  function appendAssistantTurn(speaker, initialText, index) {
     const isNarrator = !speaker || speaker === 'Narrator';
 
     const wrapper = document.createElement('div');
@@ -262,17 +302,265 @@
 
     div.appendChild(speakerSpan);
     div.appendChild(textSpan);
+    addTurnActions(div, index);
 
     wrapper.appendChild(sceneSlot);
     wrapper.appendChild(div);
     log.appendChild(wrapper);
 
-    // This turn's own image slot, filled in later by setStage() once the
-    // speaker/emotion for the reply is known — keeping the art above this text.
     div.sceneSlot = sceneSlot;
     return div;
   }
 
+ function addTurnActions(container, index) {
+    if (typeof index !== 'number') return;
+
+    const turn = currentTurns[index];
+    const isLastTurn = index === currentTurns.length - 1;
+
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'message-actions-row';
+
+    // Move Regenerate button next to 3 dots if it's the last assistant turn
+    if (isLastTurn && turn && turn.role === 'assistant') {
+      const regenBtn = document.createElement('button');
+      regenBtn.type = 'button';
+      regenBtn.className = 'msg-icon-btn';
+      regenBtn.innerHTML = '&#8635;';
+      regenBtn.setAttribute('aria-label', 'Regenerate response');
+      regenBtn.addEventListener('click', () => regenerateLastReply());
+      actionsRow.appendChild(regenBtn);
+    }
+
+    // 3-Dots Button
+    const dotsBtn = document.createElement('button');
+    dotsBtn.type = 'button';
+    dotsBtn.className = 'msg-icon-btn';
+    dotsBtn.innerHTML = '&#8942;';
+    dotsBtn.setAttribute('aria-label', 'More options');
+
+    // Dropdown Box
+    const dropdown = document.createElement('div');
+    dropdown.className = 'msg-dropdown hidden';
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'msg-dropdown-item';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => {
+      dropdown.classList.add('hidden');
+      editTurnAt(index, container);
+    });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'msg-dropdown-item';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', () => {
+      dropdown.classList.add('hidden');
+      deleteTurnAt(index);
+    });
+
+    dotsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!actionsRow.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    dropdown.appendChild(editBtn);
+    dropdown.appendChild(deleteBtn);
+    actionsRow.appendChild(dotsBtn);
+    actionsRow.appendChild(dropdown);
+
+    container.appendChild(actionsRow);
+  }
+
+  async function editTurnAt(index, container) {
+    const turn = currentTurns[index];
+    if (!turn) return;
+
+    const textSpan = container.querySelector('.turn-text');
+    if (!textSpan) return;
+
+    const originalText = textSpan.textContent;
+    textSpan.style.display = 'none';
+
+    const actionsRow = container.querySelector('.message-actions-row');
+    if (actionsRow) actionsRow.style.display = 'none';
+
+    // Bigger Edit Bubble Container
+    const editorDiv = document.createElement('div');
+    editorDiv.className = 'inline-edit-container';
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'inline-edit-textarea';
+    textarea.value = originalText;
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'inline-edit-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn-secondary';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    saveBtn.type = 'button';
+    saveBtn.className = 'send-btn';
+    saveBtn.style.width = 'auto';
+    saveBtn.style.padding = '0 18px';
+    saveBtn.style.fontSize = '0.88rem';
+
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(saveBtn);
+    editorDiv.appendChild(textarea);
+    editorDiv.appendChild(btnRow);
+    container.appendChild(editorDiv);
+
+    textarea.focus();
+
+    const cleanup = () => {
+      editorDiv.remove();
+      textSpan.style.display = '';
+      if (actionsRow) actionsRow.style.display = 'inline-flex';
+    };
+
+    cancelBtn.addEventListener('click', cleanup);
+
+    saveBtn.addEventListener('click', async () => {
+      const trimmed = textarea.value.trim();
+      if (!trimmed || trimmed === turn.text) {
+        cleanup();
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      await fetch(
+        `/api/worlds/${encodeURIComponent(currentWorldName)}/sessions/${encodeURIComponent(currentSessionId)}/turns/${index}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: trimmed })
+        }
+      );
+      await reloadLog();
+    });
+  }
+
+
+async function editTurnAt(index, container) {
+    const turn = currentTurns[index];
+    if (!turn) return;
+
+    // Find the original text and hide it
+    const textSpan = container.querySelector('.turn-text');
+    if (!textSpan) return;
+    
+    const originalText = textSpan.textContent;
+    textSpan.style.display = 'none';
+    
+    // Hide the 3-dots menu while editing
+    const actionsRow = container.querySelector('.message-actions-row');
+    if (actionsRow) actionsRow.style.display = 'none';
+
+    // Create the inline editor box
+    const editorDiv = document.createElement('div');
+    editorDiv.style.width = '100%';
+    editorDiv.style.marginTop = '8px';
+
+    const textarea = document.createElement('textarea');
+    textarea.value = originalText;
+    textarea.style.width = '100%';
+    textarea.style.minHeight = '100px';
+    textarea.style.background = '#202020';
+    textarea.style.color = '#f2f2f2';
+    textarea.style.border = '1px solid #414141';
+    textarea.style.borderRadius = '10px';
+    textarea.style.padding = '12px';
+    textarea.style.fontFamily = 'inherit';
+    textarea.style.fontSize = '0.95rem';
+    textarea.style.marginBottom = '10px';
+    textarea.style.resize = 'vertical';
+    textarea.style.outline = 'none';
+
+    // Focus style for textarea
+    textarea.addEventListener('focus', () => textarea.style.borderColor = '#666');
+    textarea.addEventListener('blur', () => textarea.style.borderColor = '#414141');
+
+    // Create Save and Cancel buttons
+    const btnRow = document.createElement('div');
+    btnRow.style.display = 'flex';
+    btnRow.style.gap = '8px';
+    btnRow.style.justifyContent = 'flex-end';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    saveBtn.style.background = '#d7ff00';
+    saveBtn.style.color = '#111';
+    saveBtn.style.border = 'none';
+    saveBtn.style.padding = '6px 16px';
+    saveBtn.style.borderRadius = '8px';
+    saveBtn.style.cursor = 'pointer';
+    saveBtn.style.fontWeight = 'bold';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.background = '#252525';
+    cancelBtn.style.color = '#fff';
+    cancelBtn.style.border = '1px solid #444';
+    cancelBtn.style.padding = '6px 16px';
+    cancelBtn.style.borderRadius = '8px';
+    cancelBtn.style.cursor = 'pointer';
+
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(saveBtn);
+    editorDiv.appendChild(textarea);
+    editorDiv.appendChild(btnRow);
+    container.appendChild(editorDiv);
+    
+    // Auto-focus the textbox
+    textarea.focus();
+
+    // Cancel logic
+    const cleanup = () => {
+      editorDiv.remove();
+      textSpan.style.display = '';
+      if (actionsRow) actionsRow.style.display = 'flex';
+    };
+    cancelBtn.addEventListener('click', cleanup);
+
+    // Save logic
+    saveBtn.addEventListener('click', async () => {
+      const trimmed = textarea.value.trim();
+      if (!trimmed || trimmed === turn.text) {
+        cleanup();
+        return;
+      }
+
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+
+      await fetch(
+        `/api/worlds/${encodeURIComponent(currentWorldName)}/sessions/${encodeURIComponent(currentSessionId)}/turns/${index}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: trimmed })
+        }
+      );
+      await reloadLog();
+    });
+  }
+
+  
   function appendError(message) {
     const div = document.createElement('div');
     div.className = 'turn error';
@@ -283,22 +571,17 @@
     log.appendChild(div);
   }
 
-  async function onSubmit(e) {
-    e.preventDefault();
-    if (sending) return;
-    const text = inputMessage.value.trim();
-    if (!text) return;
-
-    inputMessage.value = '';
-    appendUserTurn(text);
-    screenStory.scrollTop = screenStory.scrollHeight;
-
+  // Shared by a normal send and a regenerate: streams NDJSON events from
+  // `url` into fresh turn block(s) appended to the log live, then reloads
+  // the log once the stream ends so indices/edit/delete stay correct.
+  async function streamReplyInto(url, body) {
     sending = true;
     btnSend.disabled = true;
     composer.classList.add('sending');
+    if (btnRegenerate) btnRegenerate.disabled = true;
+    updateRegenerateVisibility();
 
-    const assistantDiv = appendAssistantTurn('Narrator', '');
-    let currentDiv = assistantDiv;
+    let currentDiv = appendAssistantTurn('Narrator', '');
     let currentTextSpan = currentDiv.querySelector('.turn-text');
     let currentSpeakerSpan = currentDiv.querySelector('.turn-speaker');
     currentTextSpan.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
@@ -308,8 +591,6 @@
     const handleEvent = (evt) => {
       if (evt.type === 'meta') {
         if (started) {
-          // A different character is taking over — give them their own turn
-          // block instead of overwriting whoever just finished speaking.
           currentDiv = appendAssistantTurn(evt.speaker, '');
           currentTextSpan = currentDiv.querySelector('.turn-text');
           currentSpeakerSpan = currentDiv.querySelector('.turn-speaker');
@@ -333,15 +614,15 @@
     };
 
     try {
-      const res = await fetch(`/api/worlds/${encodeURIComponent(currentWorldName)}/chat`, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: currentSessionId, message: text })
+        body: JSON.stringify(body)
       });
 
       if (!res.ok || !res.body) {
         const errData = await res.json().catch(() => ({}));
-        assistantDiv.parentElement.remove();
+        currentDiv.parentElement.remove();
         appendError(errData.error || `Request failed (${res.status})`);
         return;
       }
@@ -369,15 +650,48 @@
         }
       }
     } catch (err) {
-      if (!started) textSpan.innerHTML = '';
       appendError('Lost connection to the app server.');
     } finally {
       sending = false;
       btnSend.disabled = false;
       composer.classList.remove('sending');
+      if (btnRegenerate) btnRegenerate.disabled = false;
       screenStory.scrollTop = screenStory.scrollHeight;
+      await reloadLog(); // canonical state + working edit/delete on the new turns
       inputMessage.focus();
     }
+  }
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    if (sending) return;
+    const text = inputMessage.value.trim();
+    if (!text) return;
+
+    inputMessage.value = '';
+    appendUserTurn(text);
+    screenStory.scrollTop = screenStory.scrollHeight;
+
+    await streamReplyInto(`/api/worlds/${encodeURIComponent(currentWorldName)}/chat`, {
+      sessionId: currentSessionId,
+      message: text
+    });
+  }
+
+  async function regenerateLastReply() {
+    if (sending) return;
+    const last = currentTurns[currentTurns.length - 1];
+    if (!last || last.role !== 'assistant') return;
+
+    // Show the log up through the last user turn, dropping the reply we're
+    // about to replace, before streaming the new one in.
+    const trimmed = [...currentTurns];
+    while (trimmed.length && trimmed[trimmed.length - 1].role === 'assistant') trimmed.pop();
+    renderFullLog(trimmed);
+
+    await streamReplyInto(`/api/worlds/${encodeURIComponent(currentWorldName)}/regenerate`, {
+      sessionId: currentSessionId
+    });
   }
 
   function openSettings() {
@@ -443,7 +757,7 @@
     settingsModal.classList.add('hidden');
   }
 
- async function saveSettings() {
+  async function saveSettings() {
     const previousPort = window.location.port ? parseInt(window.location.port, 10) : 80;
     const newPort = cfgPort.value ? parseInt(cfgPort.value, 10) : previousPort;
 
@@ -458,39 +772,23 @@
     };
 
     cfgSave.disabled = true;
-    cfgStatus.textContent = "Saving..."; // Add a saving indicator
-    cfgStatus.style.color = "var(--text)";
-
     try {
-      const res = await fetch('/api/config', {
+      await fetch('/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
-      // --- NEW ERROR CHECKING LOGIC ---
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server rejected save (${res.status})`);
-      }
-
-      // Only switch ports or close if the save was actually successful
-      if (newPort && newPort !== previousPort) {
-        cfgStatus.textContent = `Switching to port ${newPort}...`;
-        cfgStatus.style.color = "var(--accent)";
-        window.setTimeout(() => {
-          window.location.href = `${window.location.protocol}//${window.location.hostname}:${newPort}`;
-        }, 700);
-      } else {
-        closeSettings();
-      }
-
-    } catch (err) {
-      // Display the error in the menu so you know what failed
-      cfgStatus.textContent = err.message;
-      cfgStatus.style.color = "var(--danger)"; 
     } finally {
       cfgSave.disabled = false;
+    }
+
+    if (newPort && newPort !== previousPort) {
+      cfgStatus.textContent = `Switching to port ${newPort}...`;
+      window.setTimeout(() => {
+        window.location.href = `${window.location.protocol}//${window.location.hostname}:${newPort}`;
+      }, 700);
+    } else {
+      closeSettings();
     }
   }
 })();
